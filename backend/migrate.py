@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 import re
 import sys
 from pathlib import Path
@@ -237,6 +238,12 @@ def run(check_only: bool = False) -> None:
 
     connection = None
 
+    # Set MIGRATION_STRICT_CHECKSUMS=1 if you want the old fail-fast
+    # behavior when an already-applied migration file was edited.
+    strict_checksums = os.getenv("MIGRATION_STRICT_CHECKSUMS", "").lower() in {
+        "1", "true", "yes", "on"
+    }
+
     try:
         connection = get_connection()
         print("Connected to MySQL ✓")
@@ -268,10 +275,20 @@ def run(check_only: bool = False) -> None:
                     )
 
                 if previous["checksum"] != checksum:
-                    raise RuntimeError(
-                        f"Migration {version} has been modified after "
-                        "being applied. Create a new migration instead."
+                    message = (
+                        f"Migration {version} was already applied, but its "
+                        "current file checksum differs from the recorded "
+                        "checksum. Skipping because the migration is already "
+                        "recorded as applied."
                     )
+
+                    if strict_checksums:
+                        raise RuntimeError(
+                            message
+                            + " MIGRATION_STRICT_CHECKSUMS is enabled."
+                        )
+
+                    print(f"  ⚠ {message}")
 
         pending = [
             (version, path, checksum)

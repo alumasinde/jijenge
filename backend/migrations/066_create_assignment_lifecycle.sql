@@ -1,4 +1,4 @@
-CREATE TABLE assignment_statuses (
+CREATE TABLE IF NOT EXISTS assignment_statuses (
     id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     code VARCHAR(50) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -24,7 +24,13 @@ VALUES
 ('CANCELLED', 'Cancelled', 1, 0, 40),
 ('IN_PROGRESS', 'In Progress', 0, 1, 50),
 ('COMPLETED', 'Completed', 1, 1, 60),
-('FAILED', 'Failed', 1, 0, 70);
+('FAILED', 'Failed', 1, 0, 70)
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name),
+    is_terminal = VALUES(is_terminal),
+    is_success = VALUES(is_success),
+    is_active = VALUES(is_active),
+    sort_order = VALUES(sort_order);
 
 ALTER TABLE job_assignments
     ADD COLUMN status_id SMALLINT UNSIGNED NULL AFTER application_id,
@@ -37,12 +43,17 @@ UPDATE job_assignments ja
 INNER JOIN assignment_statuses ass
     ON ass.code = 'CONFIRMED'
 SET ja.status_id = ass.id,
-    ja.confirmed_at = ja.assigned_at;
+    ja.confirmed_at = COALESCE(ja.confirmed_at, ja.assigned_at)
+WHERE ja.status_id IS NULL;
 
 ALTER TABLE job_assignments
     MODIFY COLUMN status_id SMALLINT UNSIGNED NOT NULL;
 
+-- Migration 025 already created this index name. Migration 066 changes
+-- its definition rather than attempting to create a second index with
+-- the same name.
 ALTER TABLE job_assignments
+    DROP INDEX idx_job_assignments_provider_status,
     ADD KEY idx_job_assignments_status_deadline (
         status_id, confirmation_deadline, id
     ),
