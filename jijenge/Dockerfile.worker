@@ -1,0 +1,30 @@
+# syntax=docker/dockerfile:1
+#
+# Separate image for the background worker (app/../workers/run.py).
+# Same base as the API image — kept as its own Dockerfile so the worker
+# can be scaled and deployed independently of the web process.
+
+FROM python:3.12-slim AS base
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /srv/app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        build-essential \
+        pkg-config \
+        default-libmysqlclient-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN useradd --create-home --uid 1000 appuser
+COPY --chown=appuser:appuser . .
+USER appuser
+
+# Long-running poll loop — see workers/run.py --sleep to tune poll interval.
+CMD ["python", "-m", "workers.run"]
