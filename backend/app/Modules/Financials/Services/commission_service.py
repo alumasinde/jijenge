@@ -3,8 +3,6 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from fastapi import HTTPException
 
-from app.database import db_connection
-
 
 MONEY = Decimal("0.01")
 
@@ -51,26 +49,39 @@ class CommissionService:
 
     def calculate(self, gross_amount, rule):
         gross = Decimal(str(gross_amount))
+
         if gross < 0:
             raise ValueError("Gross amount cannot be negative")
 
         if rule["rule_type"] == "PERCENTAGE":
             fee = (
-                gross * Decimal(str(rule["percentage_rate"])) / Decimal("100")
+                gross
+                * Decimal(str(rule["percentage_rate"]))
+                / Decimal("100")
             )
         else:
             fee = Decimal(str(rule["fixed_amount"]))
 
         if rule["min_fee"] is not None:
             fee = max(fee, Decimal(str(rule["min_fee"])))
+
         if rule["max_fee"] is not None:
             fee = min(fee, Decimal(str(rule["max_fee"])))
 
         return fee.quantize(MONEY, rounding=ROUND_HALF_UP)
 
-    def finalize_job_financials(self, assignment_id, processing_fee=Decimal("0.00")):
+    def finalize_job_financials(
+        self,
+        assignment_id,
+        processing_fee=Decimal("0.00"),
+    ):
+        # Lazy import: pure commission calculations can be tested without
+        # requiring database configuration or a live MySQL connection.
+        from app.database import db_connection
+
         with db_connection() as connection:
             cursor = connection.cursor(dictionary=True)
+
             try:
                 connection.start_transaction()
 
@@ -94,13 +105,22 @@ class CommissionService:
                     """,
                     (assignment_id,),
                 )
+
                 row = cursor.fetchone()
+
                 if not row:
-                    raise HTTPException(status_code=404, detail="Assignment not found")
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Assignment not found",
+                    )
+
                 if row["execution_status"] != "COMPLETED":
                     raise HTTPException(
                         status_code=409,
-                        detail="Financials can only be finalized after customer confirmation",
+                        detail=(
+                            "Financials can only be finalized after "
+                            "customer confirmation"
+                        ),
                     )
 
                 cursor.execute(
@@ -112,16 +132,22 @@ class CommissionService:
                     """,
                     (assignment_id,),
                 )
+
                 existing = cursor.fetchone()
+
                 if existing:
                     connection.commit()
                     cursor.close()
                     return int(existing["id"])
 
                 gross = Decimal(str(row["agreed_amount"]))
+
                 rule = self._get_rule(
-                    cursor, int(row["provider_id"]), int(row["service_category_id"])
+                    cursor,
+                    int(row["provider_id"]),
+                    int(row["service_category_id"]),
                 )
+
                 if not rule:
                     raise HTTPException(
                         status_code=409,
@@ -131,6 +157,7 @@ class CommissionService:
                 platform_fee = self.calculate(gross, rule)
                 processing = Decimal(str(processing_fee)).quantize(MONEY)
                 provider_net = gross - platform_fee - processing
+
                 if provider_net < 0:
                     raise HTTPException(
                         status_code=409,
@@ -141,20 +168,35 @@ class CommissionService:
                     """
                     INSERT INTO job_financial_breakdowns
                         (
-                            assignment_id, job_id, gross_amount,
-                            platform_fee_amount, provider_gross_amount,
-                            payment_processing_fee, provider_net_amount,
-                            currency_code, commission_rule_id, finalized_at
+                            assignment_id,
+                            job_id,
+                            gross_amount,
+                            platform_fee_amount,
+                            provider_gross_amount,
+                            payment_processing_fee,
+                            provider_net_amount,
+                            currency_code,
+                            commission_rule_id,
+                            finalized_at
                         )
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, 'KES', %s, CURRENT_TIMESTAMP)
+                        (
+                            %s, %s, %s, %s, %s, %s, %s,
+                            'KES', %s, CURRENT_TIMESTAMP
+                        )
                     """,
                     (
-                        assignment_id, row["job_id"], gross,
-                        platform_fee, gross - platform_fee,
-                        processing, provider_net, rule["id"],
+                        assignment_id,
+                        row["job_id"],
+                        gross,
+                        platform_fee,
+                        gross - platform_fee,
+                        processing,
+                        provider_net,
+                        rule["id"],
                     ),
                 )
+
                 breakdown_id = int(cursor.lastrowid)
 
                 cursor.execute(
@@ -165,26 +207,41 @@ class CommissionService:
                     LIMIT 1
                     """
                 )
+
                 available_id = cursor.fetchone()["id"]
 
                 cursor.execute(
                     """
                     INSERT INTO provider_earnings
                         (
-                            public_id, provider_id, assignment_id,
-                            financial_breakdown_id, status_id,
-                            gross_amount, platform_fee_amount,
-                            processing_fee_amount, net_amount,
-                            currency_code, available_at
+                            public_id,
+                            provider_id,
+                            assignment_id,
+                            financial_breakdown_id,
+                            status_id,
+                            gross_amount,
+                            platform_fee_amount,
+                            processing_fee_amount,
+                            net_amount,
+                            currency_code,
+                            available_at
                         )
                     VALUES
-                        (%s, %s, %s, %s, %s, %s, %s, %s, %s, 'KES',
-                         CURRENT_TIMESTAMP)
+                        (
+                            %s, %s, %s, %s, %s, %s, %s,
+                            %s, %s, 'KES', CURRENT_TIMESTAMP
+                        )
                     """,
                     (
-                        str(uuid.uuid4()), row["provider_id"], assignment_id,
-                        breakdown_id, available_id, gross, platform_fee,
-                        processing, provider_net,
+                        str(uuid.uuid4()),
+                        row["provider_id"],
+                        assignment_id,
+                        breakdown_id,
+                        available_id,
+                        gross,
+                        platform_fee,
+                        processing,
+                        provider_net,
                     ),
                 )
 
@@ -192,8 +249,12 @@ class CommissionService:
                     """
                     INSERT INTO platform_revenue_entries
                         (
-                            public_id, assignment_id, job_id,
-                            entry_type_id, amount, currency_code,
+                            public_id,
+                            assignment_id,
+                            job_id,
+                            entry_type_id,
+                            amount,
+                            currency_code,
                             financial_breakdown_id
                         )
                     SELECT
@@ -203,15 +264,21 @@ class CommissionService:
                     LIMIT 1
                     """,
                     (
-                        str(uuid.uuid4()), assignment_id, row["job_id"],
-                        platform_fee, breakdown_id,
+                        str(uuid.uuid4()),
+                        assignment_id,
+                        row["job_id"],
+                        platform_fee,
+                        breakdown_id,
                     ),
                 )
 
                 connection.commit()
+
             except Exception:
                 connection.rollback()
                 cursor.close()
                 raise
+
             cursor.close()
+
         return breakdown_id

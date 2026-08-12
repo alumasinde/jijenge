@@ -7,8 +7,6 @@ from pathlib import Path
 
 import mysql.connector
 
-from app.config import settings
-
 
 MIGRATION_PATTERN = re.compile(r"^(\d+)_([A-Za-z0-9_-]+)\.sql$")
 
@@ -18,6 +16,15 @@ def checksum_file(path: Path) -> str:
 
 
 def get_connection():
+    """
+    Create a MySQL connection.
+
+    Configuration is imported lazily here instead of at module import time.
+    This allows database-independent functions such as split_sql_statements()
+    to be imported and tested without requiring MySQL environment variables.
+    """
+    from app.config import settings
+
     return mysql.connector.connect(
         host=settings.mysql_host,
         port=settings.mysql_port,
@@ -46,12 +53,18 @@ def migration_table_exists(connection) -> bool:
 
 def load_applied(connection) -> dict[str, dict]:
     cursor = connection.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT version, filename, checksum FROM schema_migrations ORDER BY version"
-    )
-    rows = cursor.fetchall()
-    cursor.close()
-    return {row["version"]: row for row in rows}
+    try:
+        cursor.execute(
+            """
+            SELECT version, filename, checksum
+            FROM schema_migrations
+            ORDER BY version
+            """
+        )
+        rows = cursor.fetchall()
+        return {row["version"]: row for row in rows}
+    finally:
+        cursor.close()
 
 
 def load_migrations() -> list[tuple[str, Path]]:
@@ -60,6 +73,7 @@ def load_migrations() -> list[tuple[str, Path]]:
 
     for path in migration_dir.glob("*.sql"):
         match = MIGRATION_PATTERN.match(path.name)
+
         if not match:
             raise RuntimeError(
                 f"Invalid migration filename: {path.name}. "
@@ -72,6 +86,7 @@ def load_migrations() -> list[tuple[str, Path]]:
     migrations.sort(key=lambda item: int(item[0]))
 
     seen_versions = set()
+
     for version, path in migrations:
         if version in seen_versions:
             raise RuntimeError(f"Duplicate migration version: {version}")
@@ -82,8 +97,14 @@ def load_migrations() -> list[tuple[str, Path]]:
 
 def split_sql_statements(sql: str) -> list[str]:
     """
-    Split ordinary MySQL migration SQL on semicolons while respecting
-    single/double quoted strings and backtick identifiers.
+    Split ordinary MySQL migration SQL on semicolons while respecting:
+
+    - single quoted strings
+    - double quoted strings
+    - backtick identifiers
+    - escaped characters
+    - MySQL single-line comments
+    - MySQL block comments
 
     Migration files in this project deliberately avoid stored procedures,
     triggers, custom DELIMITER blocks, and other constructs that require a
@@ -132,7 +153,6 @@ def split_sql_statements(sql: str) -> list[str]:
             i += 1
             continue
 
-        # MySQL single-line comments.
         if not in_single and not in_double and not in_backtick:
             if char == "#" or (char == "-" and next_char == "-"):
                 while i < len(sql) and sql[i] != "\n":
@@ -165,33 +185,48 @@ def split_sql_statements(sql: str) -> list[str]:
     return statements
 
 
-def apply_migration(connection, version: str, path: Path, checksum: str) -> None:
+def apply_migration(
+    connection,
+    version: str,
+    path: Path,
+    checksum: str,
+) -> None:
     sql = path.read_text(encoding="utf-8").strip()
+
     if not sql:
         raise RuntimeError(f"Migration is empty: {path.name}")
 
     statements = split_sql_statements(sql)
     if not statements:
-        raise RuntimeError(f"Migration contains no executable SQL: {path.name}")
+        raise RuntimeError(
+            f"Migration contains no executable SQL: {path.name}"
+        )
 
     cursor = connection.cursor()
+
     try:
         print(f"  Running {path.name} ...")
+
         for statement in statements:
             cursor.execute(statement)
 
         cursor.execute(
             """
-            INSERT INTO schema_migrations (version, filename, checksum)
-            VALUES (%s, %s, %s)
+            INSERT INTO schema_migrations
+                (version, filename, checksum)
+            VALUES
+                (%s, %s, %s)
             """,
             (version, path.name, checksum),
         )
+
         connection.commit()
         print(f"  ✓ {path.name}")
+
     except Exception:
         connection.rollback()
         raise
+
     finally:
         cursor.close()
 
@@ -205,32 +240,37 @@ def run(check_only: bool = False) -> None:
     try:
         connection = get_connection()
         print("Connected to MySQL ✓")
+
         migrations = load_migrations()
 
-        # Migration 001 owns creation of schema_migrations. Do not pre-create
-        # it here, otherwise a fresh database would fail when 001 runs.
+        # Migration 001 owns creation of schema_migrations.
         if migration_table_exists(connection):
             applied = load_applied(connection)
         else:
             applied = {}
-            if not migrations or migrations[0][0] != '001':
+
+            if not migrations or migrations[0][0] != "001":
                 raise RuntimeError(
-                    "schema_migrations is missing and migration 001 is not the first migration"
+                    "schema_migrations is missing and migration 001 "
+                    "is not the first migration"
                 )
 
         for version, path in migrations:
             checksum = checksum_file(path)
+
             if version in applied:
                 previous = applied[version]
+
                 if previous["filename"] != path.name:
                     raise RuntimeError(
                         f"Migration {version} filename changed: "
                         f"{previous['filename']} -> {path.name}"
                     )
+
                 if previous["checksum"] != checksum:
                     raise RuntimeError(
-                        f"Migration {version} has been modified after being applied. "
-                        "Create a new migration instead."
+                        f"Migration {version} has been modified after "
+                        "being applied. Create a new migration instead."
                     )
 
         pending = [
@@ -244,12 +284,16 @@ def run(check_only: bool = False) -> None:
             return
 
         print(f"Pending migrations: {len(pending)}")
+
         for version, path, checksum in pending:
             print(f"  Pending: {path.name}")
-            # Parse before executing so malformed migrations fail in check mode.
+
             sql = path.read_text(encoding="utf-8").strip()
+
             if not sql or not split_sql_statements(sql):
-                raise RuntimeError(f"Migration contains no executable SQL: {path.name}")
+                raise RuntimeError(
+                    f"Migration contains no executable SQL: {path.name}"
+                )
 
         if check_only:
             print("Migration check completed successfully ✓")
@@ -263,6 +307,7 @@ def run(check_only: bool = False) -> None:
     except Exception as exc:
         print(f"ERROR: {exc}")
         sys.exit(1)
+
     finally:
         if connection is not None:
             connection.close()
