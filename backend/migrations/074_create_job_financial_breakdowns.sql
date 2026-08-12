@@ -1,0 +1,37 @@
+CREATE TABLE job_financial_breakdowns (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    assignment_id BIGINT UNSIGNED NOT NULL,
+    job_id BIGINT UNSIGNED NOT NULL,
+    gross_amount DECIMAL(14,2) NOT NULL,
+    platform_fee_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+    provider_gross_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+    payment_processing_fee DECIMAL(14,2) NOT NULL DEFAULT 0,
+    provider_net_amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+    currency_code CHAR(3) NOT NULL DEFAULT 'KES',
+    commission_rule_id BIGINT UNSIGNED NULL,
+    calculated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finalized_at TIMESTAMP NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_job_financial_breakdowns_assignment (assignment_id),
+    KEY idx_job_financial_breakdowns_job (job_id, created_at),
+    KEY idx_job_financial_breakdowns_rule (commission_rule_id),
+    CONSTRAINT fk_job_financial_breakdowns_assignment
+        FOREIGN KEY (assignment_id) REFERENCES job_assignments(id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_financial_breakdowns_job
+        FOREIGN KEY (job_id) REFERENCES jobs(id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_financial_breakdowns_rule
+        FOREIGN KEY (commission_rule_id) REFERENCES commission_rules(id)
+        ON UPDATE RESTRICT ON DELETE SET NULL,
+    CONSTRAINT chk_job_financial_breakdowns_amounts CHECK (
+        gross_amount >= 0
+        AND platform_fee_amount >= 0
+        AND provider_gross_amount >= 0
+        AND payment_processing_fee >= 0
+        AND provider_net_amount >= 0
+    )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

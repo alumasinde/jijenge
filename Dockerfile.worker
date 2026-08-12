@@ -1,0 +1,16 @@
+# Root convenience worker image. docker compose uses backend/Dockerfile.worker directly.
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=1
+WORKDIR /srv/app
+
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential pkg-config default-libmysqlclient-dev     && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+RUN useradd --create-home --uid 1000 appuser
+COPY --chown=appuser:appuser backend/ .
+USER appuser
+
+CMD ["python","-m","workers.run"]
