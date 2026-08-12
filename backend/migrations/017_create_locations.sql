@@ -18,7 +18,6 @@ CREATE TABLE locations (
     KEY idx_locations_county (county_id),
     KEY idx_locations_sub_county (sub_county_id),
     KEY idx_locations_active_name (is_active, name),
-    SPATIAL KEY spx_locations_point (location_point),
 
     CONSTRAINT fk_locations_country
         FOREIGN KEY (country_id)
