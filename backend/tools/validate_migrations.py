@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""Static validation for Jijenge MySQL migrations.
-
-This intentionally uses no database connection. It catches the classes of
-migration mistakes that can make a fresh database fail: invalid filenames,
-duplicate CREATE TABLE statements, and foreign keys pointing to tables that
-have not been created yet.
-"""
+"""Static validation for Jijenge MySQL migrations."""
 from __future__ import annotations
 
 import re
@@ -14,6 +8,17 @@ from pathlib import Path
 PATTERN = re.compile(r"^(\d+)_([A-Za-z0-9_-]+)\.sql$")
 CREATE = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?([A-Za-z0-9_]+)`?", re.I)
 REFERENCES = re.compile(r"REFERENCES\s+`?([A-Za-z0-9_]+)`?\s*\(", re.I)
+UNSUPPORTED_MYSQL = re.compile(
+    r"\bALTER\s+TABLE\b.*?\bADD\s+(?:COLUMN|CONSTRAINT)\s+IF\s+NOT\s+EXISTS\b",
+    re.I | re.S,
+)
+
+
+def strip_comments(sql: str) -> str:
+    sql = re.sub(r"/\*.*?\*/", " ", sql, flags=re.S)
+    sql = re.sub(r"(?m)^\s*--.*$", "", sql)
+    sql = re.sub(r"(?m)^\s*#.*$", "", sql)
+    return sql
 
 
 def validate(directory: Path) -> tuple[int, int]:
@@ -27,18 +32,43 @@ def validate(directory: Path) -> tuple[int, int]:
     tables: set[str] = set()
     created_by: dict[str, str] = {}
     errors: list[str] = []
+    expected_version = 1
 
     for path in files:
         match = PATTERN.match(path.name)
         assert match is not None
         version = match.group(1)
+        version_number = int(version)
+
         if version in seen_versions:
             errors.append(f"duplicate migration version: {version}")
         seen_versions.add(version)
 
+        if version_number != expected_version:
+            errors.append(
+                f"migration numbering gap: expected {expected_version:03d}, "
+                f"found {version} in {path.name}"
+            )
+            expected_version = version_number
+        expected_version += 1
+
         sql = path.read_text(encoding="utf-8")
         if not sql.strip():
             errors.append(f"empty migration: {path.name}")
+
+        if "DELIMITER" in sql.upper():
+            errors.append(
+                f"{path.name} uses DELIMITER blocks; migrate.py intentionally "
+                "supports ordinary semicolon-terminated SQL only"
+            )
+
+        sql_for_checks = strip_comments(sql)
+
+        if UNSUPPORTED_MYSQL.search(sql_for_checks):
+            errors.append(
+                f"{path.name} uses ALTER TABLE ... ADD ... IF NOT EXISTS; "
+                "use INFORMATION_SCHEMA + prepared SQL instead"
+            )
 
         for table in CREATE.findall(sql):
             key = table.lower()
