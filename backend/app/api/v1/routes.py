@@ -2,6 +2,7 @@
 from fastapi import APIRouter
 from app.Modules.System.routes import router as system_router
 from app.Modules.Branding.routes import router as branding_router
+from app.Modules.PublicContent.routes import router as public_content_router
 
 from app.Modules.Availability.routes import router as availability_router
 from app.Modules.Matching.routes import router as matching_router
@@ -32,6 +33,7 @@ from app.Modules.JobLifecycle.routes import router as job_lifecycle_router
 router = APIRouter()
 router.include_router(system_router)
 router.include_router(branding_router)
+router.include_router(public_content_router)
 
 for module_router in (
     auth_router, users_router, services_router, providers_router,

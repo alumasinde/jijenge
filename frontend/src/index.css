@@ -1,8 +1,133 @@
+/*
+ * Theme tokens below resolve through --brand-* custom properties.
+ * BrandingContext sets those at runtime from GET /api/v1/branding,
+ * so the whole app re-colors itself from the backend's stored brand
+ * instead of a fixed palette. The values in :root are only the
+ * pre-fetch/offline fallback and are intentionally quiet neutrals,
+ * not a finished palette - the real brand always wins once it loads.
+ *
+ * Fraunces is a fixed part of the Jijenge display identity (used only
+ * for headline moments via .font-display) and isn't brand-configurable.
+ * The UI/body font *is* brand-configurable through --brand-font, with
+ * DM Sans as the fallback - deliberately not Inter, which is the most
+ * common default in AI-generated UI and reads as a template choice.
+ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800&display=swap');
 @import "tailwindcss";
+@import "tw-animate-css";
 
-:root { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #0f172a; background: #fff; font-synthesis: none; text-rendering: optimizeLegibility; }
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: var(--brand-font), "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  /* Pre-fetch fallback only - see file header. */
+  --brand-primary: #1E211C;
+  --brand-secondary: #3A3B2D;
+  --brand-accent: #6D6B60;
+  --brand-background: #F5F4F0;
+  --brand-surface: #FFFFFF;
+  --brand-text: #1E211C;
+  --brand-muted: #6D6B60;
+  --brand-border: #E2E1DC;
+  --brand-success: #16A34A;
+  --brand-warning: #D97706;
+  --brand-danger: #DC2626;
+  --brand-info: #0284C7;
+  --brand-radius: 0.75rem;
+  --brand-font: "DM Sans";
+  --brand-primary-rgb: 30 33 28;
+  --brand-accent-rgb: 109 107 96;
+
+  --radius: var(--brand-radius);
+  --background: var(--brand-background);
+  --foreground: var(--brand-text);
+  --card: var(--brand-surface);
+  --card-foreground: var(--brand-text);
+  --popover: var(--brand-surface);
+  --popover-foreground: var(--brand-text);
+  --primary: var(--brand-primary);
+  --primary-foreground: var(--brand-background);
+  --secondary: var(--brand-secondary);
+  --secondary-foreground: var(--brand-background);
+  --muted: color-mix(in srgb, var(--brand-surface) 60%, var(--brand-border));
+  --muted-foreground: var(--brand-muted);
+  --accent: var(--brand-accent);
+  --accent-foreground: var(--brand-background);
+  --destructive: var(--brand-danger);
+  --destructive-foreground: #FFFFFF;
+  --success: var(--brand-success);
+  --success-foreground: #FFFFFF;
+  --warning: var(--brand-warning);
+  --warning-foreground: #1E211C;
+  --info: var(--brand-info);
+  --info-foreground: #FFFFFF;
+  --border: color-mix(in srgb, var(--brand-text) 12%, transparent);
+  --input: color-mix(in srgb, var(--brand-text) 12%, transparent);
+  --ring: var(--brand-accent);
+}
+
+.dark {
+  --background: var(--brand-text);
+  --foreground: var(--brand-background);
+  --card: color-mix(in srgb, var(--brand-text) 90%, white);
+  --card-foreground: var(--brand-background);
+  --popover: color-mix(in srgb, var(--brand-text) 90%, white);
+  --popover-foreground: var(--brand-background);
+  --primary: var(--brand-accent);
+  --primary-foreground: var(--brand-text);
+  --secondary: color-mix(in srgb, var(--brand-text) 80%, white);
+  --secondary-foreground: var(--brand-background);
+  --muted: color-mix(in srgb, var(--brand-text) 85%, white);
+  --muted-foreground: color-mix(in srgb, var(--brand-background) 70%, transparent);
+  --accent: var(--brand-accent);
+  --accent-foreground: var(--brand-text);
+  --border: color-mix(in srgb, var(--brand-background) 15%, transparent);
+  --input: color-mix(in srgb, var(--brand-background) 15%, transparent);
+  --ring: var(--brand-accent);
+}
+
+* { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; }
-a { text-decoration: none; }
-button, input { font: inherit; }
-::selection { background: #dbeafe; color: #1e3a8a; }
+body { margin: 0; min-width: 320px; background: var(--background); color: var(--foreground); font-family: var(--font-sans); transition: background-color 200ms ease, color 200ms ease; }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), a[href] { cursor: pointer; }
+button:focus-visible, a:focus-visible, input:focus-visible { outline: 3px solid var(--brand-accent); outline-offset: 3px; }
+.font-display { font-family: "Fraunces", Georgia, serif; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-in { animation: rise-in 560ms cubic-bezier(.23,1,.32,1) both; }
+  @keyframes rise-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+}
