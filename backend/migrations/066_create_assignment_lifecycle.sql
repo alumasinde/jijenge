@@ -49,15 +49,20 @@ WHERE ja.status_id IS NULL;
 ALTER TABLE job_assignments
     MODIFY COLUMN status_id SMALLINT UNSIGNED NOT NULL;
 
--- Migration 025 already created this index name. Migration 066 changes
--- its definition rather than attempting to create a second index with
--- the same name.
+-- Migration 025 already created idx_job_assignments_provider_status to
+-- back fk_job_assignments_provider. MySQL evaluates DROP INDEX before
+-- ADD KEY when checking FK index coverage, so dropping and recreating
+-- an FK-backing index under the same name in a single ALTER TABLE
+-- fails with error 1553, even though the final schema would be valid.
+-- Work around this by adding the replacement index under a temporary
+-- name first (so provider_id and status_id are always covered), then
+-- dropping the old index and renaming the new one in a second
+-- statement.
 ALTER TABLE job_assignments
-    DROP INDEX idx_job_assignments_provider_status,
     ADD KEY idx_job_assignments_status_deadline (
         status_id, confirmation_deadline, id
     ),
-    ADD KEY idx_job_assignments_provider_status (
+    ADD KEY idx_job_assignments_provider_status_new (
         provider_id, status_id, cancelled_at, completed_at
     ),
     ADD CONSTRAINT fk_job_assignments_status
@@ -65,3 +70,8 @@ ALTER TABLE job_assignments
         REFERENCES assignment_statuses (id)
         ON UPDATE RESTRICT
         ON DELETE RESTRICT;
+
+ALTER TABLE job_assignments
+    DROP INDEX idx_job_assignments_provider_status,
+    RENAME INDEX idx_job_assignments_provider_status_new
+        TO idx_job_assignments_provider_status;
