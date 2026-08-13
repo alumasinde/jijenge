@@ -16,7 +16,6 @@ CREATE TABLE job_payment_records (
     idempotency_key VARCHAR(160) NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-
     PRIMARY KEY (id),
     UNIQUE KEY uq_job_payment_records_public_id (public_id),
     UNIQUE KEY uq_job_payment_records_assignment (assignment_id),
@@ -24,23 +23,10 @@ CREATE TABLE job_payment_records (
     KEY idx_job_payment_records_job_status (job_id,status_id,created_at),
     KEY idx_job_payment_records_intent (payment_intent_id),
     KEY idx_job_payment_records_reference (payment_reference),
-
-    CONSTRAINT fk_job_payment_records_assignment
-        FOREIGN KEY (assignment_id) REFERENCES job_assignments(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_job_payment_records_job
-        FOREIGN KEY (job_id) REFERENCES jobs(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_job_payment_records_payer
-        FOREIGN KEY (payer_user_id) REFERENCES users(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_job_payment_records_method
-        FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_job_payment_records_intent
-        FOREIGN KEY (payment_intent_id) REFERENCES payment_intents(id)
-        ON UPDATE RESTRICT ON DELETE SET NULL,
-    CONSTRAINT fk_job_payment_records_status
-        FOREIGN KEY (status_id) REFERENCES job_payment_statuses(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT
+    CONSTRAINT fk_job_payment_records_assignment FOREIGN KEY (assignment_id) REFERENCES job_assignments(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_payment_records_job FOREIGN KEY (job_id) REFERENCES jobs(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_payment_records_payer FOREIGN KEY (payer_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_payment_records_method FOREIGN KEY (payment_method_id) REFERENCES payment_methods(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_payment_records_intent FOREIGN KEY (payment_intent_id) REFERENCES payment_intents(id) ON UPDATE RESTRICT ON DELETE SET NULL,
+    CONSTRAINT fk_job_payment_records_status FOREIGN KEY (status_id) REFERENCES job_payment_statuses(id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

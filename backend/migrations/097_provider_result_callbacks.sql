@@ -17,16 +17,8 @@ CREATE TABLE provider_result_events (
     processed_at TIMESTAMP NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_provider_result_events_event (
-        provider_code,provider_event_id
-    ),
-    KEY idx_provider_result_events_execution (
-        execution_id,created_at
-    ),
-    KEY idx_provider_result_events_settlement (
-        settlement_id,created_at
-    ),
-    KEY idx_provider_result_events_refund (
-        refund_id,created_at
-    )
+    UNIQUE KEY uq_provider_result_events_event (provider_code,provider_event_id),
+    KEY idx_provider_result_events_execution (execution_id,created_at),
+    KEY idx_provider_result_events_settlement (settlement_id,created_at),
+    KEY idx_provider_result_events_refund (refund_id,created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -10,17 +10,7 @@ CREATE TABLE job_execution_event_types (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO job_execution_event_types (code, name) VALUES
-('ON_THE_WAY', 'On The Way'),
-('ARRIVED', 'Arrived'),
-('STARTED', 'Started'),
-('PAUSED', 'Paused'),
-('RESUMED', 'Resumed'),
-('COMPLETION_SUBMITTED', 'Completion Submitted'),
-('CUSTOMER_CONFIRMED', 'Customer Confirmed'),
-('CUSTOMER_REJECTED', 'Customer Rejected'),
-('CANCELLED', 'Cancelled'),
-('DISPUTED', 'Disputed'),
-('FAILED', 'Failed');
+('ON_THE_WAY','On The Way'),('ARRIVED','Arrived'),('STARTED','Started'),('PAUSED','Paused'),('RESUMED','Resumed'),('COMPLETION_SUBMITTED','Completion Submitted'),('CUSTOMER_CONFIRMED','Customer Confirmed'),('CUSTOMER_REJECTED','Customer Rejected'),('CANCELLED','Cancelled'),('DISPUTED','Disputed'),('FAILED','Failed');
 
 CREATE TABLE job_execution_events (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -33,25 +23,9 @@ CREATE TABLE job_execution_events (
     metadata_json JSON NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_job_execution_events_assignment_created (
-        assignment_id, created_at, id
-    ),
-    KEY idx_job_execution_events_actor_created (
-        actor_user_id, created_at
-    ),
-    CONSTRAINT fk_job_execution_events_assignment
-        FOREIGN KEY (assignment_id)
-        REFERENCES job_assignments (id)
-        ON UPDATE RESTRICT
-        ON DELETE CASCADE,
-    CONSTRAINT fk_job_execution_events_type
-        FOREIGN KEY (event_type_id)
-        REFERENCES job_execution_event_types (id)
-        ON UPDATE RESTRICT
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_job_execution_events_actor
-        FOREIGN KEY (actor_user_id)
-        REFERENCES users (id)
-        ON UPDATE RESTRICT
-        ON DELETE SET NULL
+    KEY idx_job_execution_events_assignment_created (assignment_id,created_at,id),
+    KEY idx_job_execution_events_actor_created (actor_user_id,created_at),
+    CONSTRAINT fk_job_execution_events_assignment FOREIGN KEY (assignment_id) REFERENCES job_assignments(id) ON UPDATE RESTRICT ON DELETE CASCADE,
+    CONSTRAINT fk_job_execution_events_type FOREIGN KEY (event_type_id) REFERENCES job_execution_event_types(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_job_execution_events_actor FOREIGN KEY (actor_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

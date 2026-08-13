@@ -3,7 +3,7 @@ CREATE TABLE settlement_hold_rules (
     public_id CHAR(36) NOT NULL,
     name VARCHAR(150) NOT NULL,
     hold_hours INT UNSIGNED NOT NULL DEFAULT 24,
-    service_category_id BIGINT UNSIGNED NULL,
+    service_category_id INT UNSIGNED NULL,
     is_default TINYINT(1) NOT NULL DEFAULT 0,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

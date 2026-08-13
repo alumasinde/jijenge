@@ -13,15 +13,15 @@ ON DUPLICATE KEY UPDATE
     is_success = VALUES(is_success);
 
 ALTER TABLE refunds
-    ADD COLUMN IF NOT EXISTS job_payment_record_id BIGINT UNSIGNED NULL AFTER payment_transaction_id,
-    ADD COLUMN IF NOT EXISTS dispute_id BIGINT UNSIGNED NULL AFTER job_payment_record_id,
-    ADD COLUMN IF NOT EXISTS requested_amount DECIMAL(14,2) NULL AFTER amount,
-    ADD COLUMN IF NOT EXISTS approved_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER requested_amount,
-    ADD COLUMN IF NOT EXISTS paid_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER approved_amount,
-    ADD COLUMN IF NOT EXISTS requested_at TIMESTAMP NULL AFTER updated_at,
-    ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP NULL AFTER requested_at,
-    ADD COLUMN IF NOT EXISTS paid_at TIMESTAMP NULL AFTER approved_at,
-    ADD COLUMN IF NOT EXISTS failure_reason VARCHAR(1000) NULL AFTER paid_at;
+    ADD COLUMN job_payment_record_id BIGINT UNSIGNED NULL AFTER payment_transaction_id,
+    ADD COLUMN dispute_id BIGINT UNSIGNED NULL AFTER job_payment_record_id,
+    ADD COLUMN requested_amount DECIMAL(14,2) NULL AFTER amount,
+    ADD COLUMN approved_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER requested_amount,
+    ADD COLUMN paid_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER approved_amount,
+    ADD COLUMN requested_at TIMESTAMP NULL AFTER updated_at,
+    ADD COLUMN approved_at TIMESTAMP NULL AFTER requested_at,
+    ADD COLUMN paid_at TIMESTAMP NULL AFTER approved_at,
+    ADD COLUMN failure_reason VARCHAR(1000) NULL AFTER paid_at;
 
 -- The legacy payment-intent flow remains supported. New job-payment refunds
 -- can leave the legacy payment_intent_id/amount fields empty.

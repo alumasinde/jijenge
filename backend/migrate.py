@@ -33,6 +33,7 @@ def get_connection():
         user=settings.mysql_user,
         password=settings.mysql_password,
         autocommit=False,
+        buffered=True,
     )
 
 
@@ -94,6 +95,18 @@ def load_migrations() -> list[tuple[str, Path]]:
         seen_versions.add(version)
 
     return migrations
+
+
+def get_pending_migrations(
+    migrations: list[tuple[str, Path]],
+    applied: dict[str, dict],
+) -> list[tuple[str, Path, str]]:
+    """Return unapplied migrations with an independently computed checksum."""
+    return [
+        (version, path, checksum_file(path))
+        for version, path in migrations
+        if version not in applied
+    ]
 
 
 def split_sql_statements(sql: str) -> list[str]:
@@ -203,7 +216,7 @@ def apply_migration(
             f"Migration contains no executable SQL: {path.name}"
         )
 
-    cursor = connection.cursor()
+    cursor = connection.cursor(buffered=True)
 
     try:
         print(f"  Running {path.name} ...")
@@ -290,11 +303,7 @@ def run(check_only: bool = False) -> None:
 
                     print(f"  ⚠ {message}")
 
-        pending = [
-            (version, path, checksum)
-            for version, path in migrations
-            if version not in applied
-        ]
+        pending = get_pending_migrations(migrations, applied)
 
         if not pending:
             print("Database is already up to date ✓")

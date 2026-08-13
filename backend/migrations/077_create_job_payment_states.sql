@@ -11,12 +11,4 @@ CREATE TABLE job_payment_statuses (
     UNIQUE KEY uq_job_payment_statuses_code (code),
     UNIQUE KEY uq_job_payment_statuses_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO job_payment_statuses (code,name,is_terminal,is_success,sort_order) VALUES
-('PENDING','Pending',0,0,10),
-('PROCESSING','Processing',0,0,20),
-('PAID','Paid',1,1,30),
-('FAILED','Failed',1,0,40),
-('CANCELLED','Cancelled',1,0,50),
-('REFUNDED','Refunded',1,0,60),
-('PARTIALLY_REFUNDED','Partially Refunded',1,0,70);
+INSERT INTO job_payment_statuses (code,name,is_terminal,is_success,sort_order) VALUES ('PENDING','Pending',0,0,10),('PROCESSING','Processing',0,0,20),('PAID','Paid',1,1,30),('FAILED','Failed',1,0,40),('CANCELLED','Cancelled',1,0,50),('REFUNDED','Refunded',1,0,60),('PARTIALLY_REFUNDED','Partially Refunded',1,0,70);

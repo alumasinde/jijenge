@@ -8,12 +8,7 @@ CREATE TABLE provider_payout_method_types (
     UNIQUE KEY uq_provider_payout_method_types_code (code),
     UNIQUE KEY uq_provider_payout_method_types_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO provider_payout_method_types (code,name) VALUES
-('MPESA','M-Pesa'),
-('BANK','Bank Account'),
-('CASH','Cash');
-
+INSERT INTO provider_payout_method_types (code,name) VALUES ('MPESA','M-Pesa'),('BANK','Bank Account'),('CASH','Cash');
 CREATE TABLE provider_payout_methods (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     public_id CHAR(36) NOT NULL,
@@ -28,16 +23,8 @@ CREATE TABLE provider_payout_methods (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_provider_payout_methods_public_id (public_id),
-    KEY idx_provider_payout_methods_provider (
-        provider_id,is_active,is_default,id
-    ),
-    KEY idx_provider_payout_methods_type (
-        method_type_id,is_active
-    ),
-    CONSTRAINT fk_provider_payout_methods_provider
-        FOREIGN KEY (provider_id) REFERENCES provider_profiles(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_provider_payout_methods_type
-        FOREIGN KEY (method_type_id) REFERENCES provider_payout_method_types(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT
+    KEY idx_provider_payout_methods_provider (provider_id,is_active,is_default,id),
+    KEY idx_provider_payout_methods_type (method_type_id,is_active),
+    CONSTRAINT fk_provider_payout_methods_provider FOREIGN KEY (provider_id) REFERENCES provider_profiles(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_provider_payout_methods_type FOREIGN KEY (method_type_id) REFERENCES provider_payout_method_types(id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

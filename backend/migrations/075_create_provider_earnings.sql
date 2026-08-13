@@ -2,9 +2,6 @@
 -- Keep the original columns for backwards compatibility with older services,
 -- while adding the assignment/financial-breakdown model used by the current API.
 
-ALTER TABLE provider_earning_statuses
-    ADD COLUMN IF NOT EXISTS is_active TINYINT(1) NOT NULL DEFAULT 1 AFTER is_terminal;
-
 INSERT INTO provider_earning_statuses (code, name, is_terminal, is_active)
 VALUES
     ('ON_HOLD', 'On Hold', 0, 1)
@@ -14,10 +11,10 @@ ON DUPLICATE KEY UPDATE
     is_active = 1;
 
 ALTER TABLE provider_earnings
-    ADD COLUMN IF NOT EXISTS provider_id BIGINT UNSIGNED NULL AFTER provider_user_id,
-    ADD COLUMN IF NOT EXISTS assignment_id BIGINT UNSIGNED NULL AFTER job_id,
-    ADD COLUMN IF NOT EXISTS financial_breakdown_id BIGINT UNSIGNED NULL AFTER assignment_id,
-    ADD COLUMN IF NOT EXISTS processing_fee_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER platform_fee_amount;
+    ADD COLUMN provider_id BIGINT UNSIGNED NULL AFTER provider_user_id,
+    ADD COLUMN assignment_id BIGINT UNSIGNED NULL AFTER job_id,
+    ADD COLUMN financial_breakdown_id BIGINT UNSIGNED NULL AFTER assignment_id,
+    ADD COLUMN processing_fee_amount DECIMAL(14,2) NOT NULL DEFAULT 0 AFTER platform_fee_amount;
 
 -- Current services identify earnings by provider profile and assignment.
 UPDATE provider_earnings pe

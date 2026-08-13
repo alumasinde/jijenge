@@ -30,9 +30,4 @@ CREATE TABLE brandings (
     UNIQUE KEY uq_brandings_code (brand_code),
     KEY idx_brandings_active (is_active)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO brandings (
-    brand_code, app_name, short_name, tagline
-) VALUES (
-    'default', 'Jijenge', 'Jijenge', 'Find trusted services and get things done.'
-);
+INSERT INTO brandings (brand_code,app_name,short_name,tagline) VALUES ('default','Jijenge','Jijenge','Find trusted services and get things done.');

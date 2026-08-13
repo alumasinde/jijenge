@@ -7,15 +7,7 @@ CREATE TABLE dispute_evidence_types (
     PRIMARY KEY (id),
     UNIQUE KEY uq_dispute_evidence_types_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO dispute_evidence_types (code,name) VALUES
-('PHOTO','Photo'),
-('VIDEO','Video'),
-('DOCUMENT','Document'),
-('MESSAGE','Message'),
-('LOCATION','Location'),
-('NOTE','Note');
-
+INSERT INTO dispute_evidence_types (code,name) VALUES ('PHOTO','Photo'),('VIDEO','Video'),('DOCUMENT','Document'),('MESSAGE','Message'),('LOCATION','Location'),('NOTE','Note');
 CREATE TABLE dispute_evidence (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     dispute_id BIGINT UNSIGNED NOT NULL,
@@ -30,13 +22,7 @@ CREATE TABLE dispute_evidence (
     PRIMARY KEY (id),
     KEY idx_dispute_evidence_dispute (dispute_id,created_at,id),
     KEY idx_dispute_evidence_submitter (submitted_by_user_id,created_at),
-    CONSTRAINT fk_dispute_evidence_dispute
-        FOREIGN KEY (dispute_id) REFERENCES disputes(id)
-        ON UPDATE RESTRICT ON DELETE CASCADE,
-    CONSTRAINT fk_dispute_evidence_type
-        FOREIGN KEY (evidence_type_id) REFERENCES dispute_evidence_types(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_dispute_evidence_submitter
-        FOREIGN KEY (submitted_by_user_id) REFERENCES users(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT
+    CONSTRAINT fk_dispute_evidence_dispute FOREIGN KEY (dispute_id) REFERENCES disputes(id) ON UPDATE RESTRICT ON DELETE CASCADE,
+    CONSTRAINT fk_dispute_evidence_type FOREIGN KEY (evidence_type_id) REFERENCES dispute_evidence_types(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_dispute_evidence_submitter FOREIGN KEY (submitted_by_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

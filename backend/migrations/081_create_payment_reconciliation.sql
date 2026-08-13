@@ -8,13 +8,7 @@ CREATE TABLE payment_reconciliation_statuses (
     UNIQUE KEY uq_payment_reconciliation_statuses_code (code),
     UNIQUE KEY uq_payment_reconciliation_statuses_name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO payment_reconciliation_statuses (code,name) VALUES
-('UNMATCHED','Unmatched'),
-('MATCHED','Matched'),
-('EXCEPTION','Exception'),
-('RESOLVED','Resolved');
-
+INSERT INTO payment_reconciliation_statuses (code,name) VALUES ('UNMATCHED','Unmatched'),('MATCHED','Matched'),('EXCEPTION','Exception'),('RESOLVED','Resolved');
 CREATE TABLE payment_reconciliation_records (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     payment_transaction_id BIGINT UNSIGNED NOT NULL,
@@ -34,13 +28,7 @@ CREATE TABLE payment_reconciliation_records (
     UNIQUE KEY uq_payment_reconciliation_transaction (payment_transaction_id),
     KEY idx_payment_reconciliation_status (status_id,created_at,id),
     KEY idx_payment_reconciliation_provider_ref (provider_code,provider_reference),
-    CONSTRAINT fk_payment_reconciliation_transaction
-        FOREIGN KEY (payment_transaction_id) REFERENCES payment_transactions(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_payment_reconciliation_status
-        FOREIGN KEY (status_id) REFERENCES payment_reconciliation_statuses(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_payment_reconciliation_resolver
-        FOREIGN KEY (resolved_by_user_id) REFERENCES users(id)
-        ON UPDATE RESTRICT ON DELETE SET NULL
+    CONSTRAINT fk_payment_reconciliation_transaction FOREIGN KEY (payment_transaction_id) REFERENCES payment_transactions(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_payment_reconciliation_status FOREIGN KEY (status_id) REFERENCES payment_reconciliation_statuses(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_payment_reconciliation_resolver FOREIGN KEY (resolved_by_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

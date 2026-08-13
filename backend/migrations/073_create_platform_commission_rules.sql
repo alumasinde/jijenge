@@ -1,4 +1,4 @@
-CREATE TABLE commission_rule_types (
+CREATE TABLE IF NOT EXISTS commission_rule_types (
     id SMALLINT UNSIGNED NOT NULL AUTO_INCREMENT,
     code VARCHAR(40) NOT NULL,
     name VARCHAR(100) NOT NULL,
@@ -11,9 +11,11 @@ CREATE TABLE commission_rule_types (
 
 INSERT INTO commission_rule_types (code, name) VALUES
 ('PERCENTAGE', 'Percentage'),
-('FIXED', 'Fixed');
+('FIXED', 'Fixed')
+ON DUPLICATE KEY UPDATE
+    name = VALUES(name);
 
-CREATE TABLE commission_rules (
+CREATE TABLE IF NOT EXISTS commission_rules (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     public_id CHAR(36) NOT NULL,
     name VARCHAR(150) NOT NULL,
@@ -23,7 +25,7 @@ CREATE TABLE commission_rules (
     currency_code CHAR(3) NOT NULL DEFAULT 'KES',
     min_fee DECIMAL(14,2) NULL,
     max_fee DECIMAL(14,2) NULL,
-    service_category_id BIGINT UNSIGNED NULL,
+    service_category_id INT UNSIGNED NULL,
     provider_id BIGINT UNSIGNED NULL,
     starts_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ends_at TIMESTAMP NULL,

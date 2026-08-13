@@ -7,13 +7,7 @@ CREATE TABLE provider_earning_hold_reasons (
     PRIMARY KEY (id),
     UNIQUE KEY uq_provider_earning_hold_reasons_code (code)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-INSERT INTO provider_earning_hold_reasons (code,name) VALUES
-('DISPUTE_WINDOW','Customer dispute window'),
-('DISPUTE_OPEN','Active dispute'),
-('MANUAL_REVIEW','Manual financial review'),
-('PAYOUT_REVIEW','Payout review');
-
+INSERT INTO provider_earning_hold_reasons (code,name) VALUES ('DISPUTE_WINDOW','Customer dispute window'),('DISPUTE_OPEN','Active dispute'),('MANUAL_REVIEW','Manual financial review'),('PAYOUT_REVIEW','Payout review');
 CREATE TABLE provider_earning_holds (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     provider_earning_id BIGINT UNSIGNED NOT NULL,
@@ -26,19 +20,9 @@ CREATE TABLE provider_earning_holds (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_provider_earning_holds_release (
-        released_at,releases_at,id
-    ),
-    KEY idx_provider_earning_holds_earning (
-        provider_earning_id,released_at,id
-    ),
-    CONSTRAINT fk_provider_earning_holds_earning
-        FOREIGN KEY (provider_earning_id) REFERENCES provider_earnings(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_provider_earning_holds_reason
-        FOREIGN KEY (hold_reason_id) REFERENCES provider_earning_hold_reasons(id)
-        ON UPDATE RESTRICT ON DELETE RESTRICT,
-    CONSTRAINT fk_provider_earning_holds_releaser
-        FOREIGN KEY (released_by_user_id) REFERENCES users(id)
-        ON UPDATE RESTRICT ON DELETE SET NULL
+    KEY idx_provider_earning_holds_release (released_at,releases_at,id),
+    KEY idx_provider_earning_holds_earning (provider_earning_id,released_at,id),
+    CONSTRAINT fk_provider_earning_holds_earning FOREIGN KEY (provider_earning_id) REFERENCES provider_earnings(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_provider_earning_holds_reason FOREIGN KEY (hold_reason_id) REFERENCES provider_earning_hold_reasons(id) ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_provider_earning_holds_releaser FOREIGN KEY (released_by_user_id) REFERENCES users(id) ON UPDATE RESTRICT ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
