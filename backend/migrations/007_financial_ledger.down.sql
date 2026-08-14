@@ -1,0 +1,10 @@
+DROP TRIGGER IF EXISTS ledger_entries_no_update;
+DROP TRIGGER IF EXISTS ledger_entries_no_delete;
+DROP TRIGGER IF EXISTS ledger_transactions_no_update;
+DROP TRIGGER IF EXISTS ledger_transactions_no_delete;
+DROP TABLE IF EXISTS ledger_idempotency;
+DROP TABLE IF EXISTS ledger_holds;
+DROP TABLE IF EXISTS ledger_entries;
+DROP TABLE IF EXISTS ledger_transactions;
+DROP TABLE IF EXISTS financial_balances;
+DROP TABLE IF EXISTS financial_accounts;

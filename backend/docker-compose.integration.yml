@@ -1,0 +1,27 @@
+services:
+  mysql:
+    ports:
+      - "33306:3306"
+    volumes:
+      - jijenge_mysql_integration_data:/var/lib/mysql
+
+  migrate:
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  integration:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration
+    environment:
+      DB_DSN: ${MYSQL_USER:-jijenge_app}:${MYSQL_PASSWORD:?MYSQL_PASSWORD is required}@tcp(mysql:3306)/${MYSQL_DATABASE:-jijenge}?parseTime=true&charset=utf8mb4&collation=utf8mb4_0900_ai_ci
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - jijenge
+
+volumes:
+  jijenge_mysql_integration_data:
+    name: jijenge_mysql_integration_data

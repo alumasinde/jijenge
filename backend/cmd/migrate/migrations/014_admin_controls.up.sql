@@ -1,0 +1,20 @@
+CREATE TABLE admin_action_requests (
+ id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+ public_id CHAR(26) NOT NULL,
+ action VARCHAR(64) NOT NULL,
+ target_id BIGINT UNSIGNED NOT NULL,
+ requested_by BIGINT UNSIGNED NOT NULL,
+ approved_by BIGINT UNSIGNED NULL,
+ status VARCHAR(16) NOT NULL DEFAULT 'pending',
+ reason VARCHAR(500) NOT NULL,
+ created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+ approved_at TIMESTAMP(6) NULL,
+ PRIMARY KEY(id),
+ UNIQUE KEY uq_admin_action_public_id(public_id),
+ KEY idx_admin_action_status_created(status,created_at,id),
+ KEY idx_admin_action_requester(requested_by,created_at),
+ CONSTRAINT fk_admin_action_requester FOREIGN KEY(requested_by) REFERENCES users(id) ON DELETE RESTRICT,
+ CONSTRAINT fk_admin_action_approver FOREIGN KEY(approved_by) REFERENCES users(id) ON DELETE RESTRICT,
+ CONSTRAINT chk_admin_action_status CHECK(status IN ('pending','approved','rejected')),
+ CONSTRAINT chk_admin_action_action CHECK(action IN ('block_user','unblock_user','freeze_account','unfreeze_account'))
+) ENGINE=InnoDB;

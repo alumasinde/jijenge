@@ -1,0 +1,9 @@
+services:
+  mysql:
+    restart: unless-stopped
+    ports: []
+  migrate:
+    restart: "no"
+  api:
+    restart: unless-stopped
+    ports: []

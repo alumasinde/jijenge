@@ -1,0 +1,28 @@
+
+CREATE TABLE escrow_payments (
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    public_id CHAR(26) NOT NULL,
+    task_id BIGINT UNSIGNED NOT NULL,
+    assignment_id BIGINT UNSIGNED NOT NULL,
+    payer_account_id BIGINT UNSIGNED NOT NULL,
+    worker_account_id BIGINT UNSIGNED NOT NULL,
+    amount_cents BIGINT UNSIGNED NOT NULL,
+    currency CHAR(3) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
+    released_at TIMESTAMP(6) NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_escrow_public_id (public_id),
+    UNIQUE KEY uq_escrow_assignment (assignment_id),
+    KEY idx_escrow_task_status (task_id,status),
+    KEY idx_escrow_payer_status (payer_account_id,status),
+    KEY idx_escrow_worker_status (worker_account_id,status),
+    CONSTRAINT fk_escrow_task FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_escrow_assignment FOREIGN KEY (assignment_id) REFERENCES task_assignments(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_escrow_payer FOREIGN KEY (payer_account_id) REFERENCES financial_accounts(id) ON DELETE RESTRICT,
+    CONSTRAINT fk_escrow_worker FOREIGN KEY (worker_account_id) REFERENCES financial_accounts(id) ON DELETE RESTRICT,
+    CONSTRAINT chk_escrow_amount CHECK (amount_cents > 0),
+    CONSTRAINT chk_escrow_currency CHECK (currency REGEXP '^[A-Z]{3}$'),
+    CONSTRAINT chk_escrow_status CHECK (status IN ('funded','submitted','verification_pending','released','refunded','disputed','cancelled'))
+) ENGINE=InnoDB;
