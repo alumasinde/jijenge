@@ -141,6 +141,7 @@ func TestConcurrentSameIdempotencyKeyCreatesOneTransfer(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	const key = "same-idempotency-key"
 	const workers = 20
 	ids := make(chan uint64, workers)
 	errs := make(chan error, workers)
