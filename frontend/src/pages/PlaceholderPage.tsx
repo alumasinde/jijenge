@@ -1,1 +1,0 @@
-export function PlaceholderPage({ title, text }: { title: string; text: string }) { return <main className="mx-auto max-w-4xl px-5 py-24 lg:px-8"><p className="text-sm font-black uppercase tracking-widest text-blue-600">Jijenge</p><h1 className="mt-3 text-5xl font-black">{title}</h1><p className="mt-5 max-w-2xl text-lg leading-8 text-slate-500">{text}</p></main> }
